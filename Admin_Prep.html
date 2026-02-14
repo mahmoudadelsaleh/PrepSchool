@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الإعدادي - التحكم الكامل</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f8fafc; text-align: center; padding: 15px; margin: 0; direction: rtl; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: right; }
+        h2 { color: #1e293b; text-align: center; }
+        h3 { color: #3b82f6; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin: 10px 0; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin: 5px 0; }
+        .blue { background: #3b82f6; } .green { background: #10b981; } .red { background: #ef4444; } .gray { background: #64748b; }
+        .teacher-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+    <h2>⚙️ لوحة الإدارة والتحكم</h2>
+    
+    <div class="card">
+        <h3>👨‍🏫 إدارة المعلمين</h3>
+        <input type="text" id="tName" placeholder="اسم المعلم">
+        <input type="text" id="tID" placeholder="كود المستخدم (ID)">
+        <input type="password" id="tPass" placeholder="كلمة المرور">
+        <select id="tRole">
+            <option value="teacher">معلم (رصد فقط)</option>
+            <option value="admin">أدمن (تحكم كامل)</option>
+        </select>
+        <button class="btn blue" onclick="addTeacher()">إضافة / تحديث معلم</button>
+        <div id="teachersList" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="card">
+        <h3>📤 رفع بيانات الطلاب (Excel)</h3>
+        <p style="font-size:12px; color:gray;">الأعمدة المطلوبة: الاسم، الفصل، رقم الجلوس</p>
+        <div style="background:#f1f5f9; padding:10px; border-radius:10px; margin-bottom:10px;">
+            <strong>الصف الأول:</strong>
+            <input type="file" id="file1">
+            <button class="btn green" onclick="upload(1)">رفع القائمة</button>
+        </div>
+        <div style="background:#f1f5f9; padding:10px; border-radius:10px;">
+            <strong>الصف الثاني:</strong>
+            <input type="file" id="file2">
+            <button class="btn green" onclick="upload(2)">رفع القائمة</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📊 استخراج الدرجات (70 درجة)</h3>
+        <select id="expGrade"><option value="1">الصف الأول</option><option value="2">الصف الثاني</option></select>
+        <button class="btn red" onclick="exportData()">تصدير شيت الكنترول</button>
+    </div>
+
+    <script>
+        // إدارة المعلمين
+        async function addTeacher() {
+            const id = document.getElementById('tID').value.trim();
+            const name = document.getElementById('tName').value;
+            const pass = document.getElementById('tPass').value;
+            const role = document.getElementById('tRole').value;
+            if(!id || !name || !pass) return alert("أكمل البيانات");
+            await db.collection('teachers').doc(id).set({ name, pass, role });
+            alert("تم الحفظ");
+            loadTeachers();
+        }
+
+        async function loadTeachers() {
+            const snap = await db.collection('teachers').get();
+            let html = '';
+            snap.forEach(doc => {
+                const t = doc.data();
+                html += `<div class="teacher-item">
+                    <span>${t.name} (${doc.id})</span>
+                    <button class="red" style="padding:5px 10px; border-radius:5px; border:none; color:white;" onclick="deleteTeacher('${doc.id}')">حذف</button>
+                </div>`;
+            });
+            document.getElementById('teachersList').innerHTML = html;
+        }
+
+        async function deleteTeacher(id) {
+            if(confirm("حذف هذا المعلم؟")) { await db.collection('teachers').doc(id).delete(); loadTeachers(); }
+        }
+
+        // رفع الطلاب
+        async function upload(grade) {
+            const file = document.getElementById('file'+grade).files[0];
+            if(!file) return alert("اختر ملف أولاً");
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const batch = db.batch();
+                rows.forEach(r => {
+                    const ref = db.collection('students').doc();
+                    batch.set(ref, { 
+                        name: r.الاسم, 
+                        class: String(r.الفصل), 
+                        seatNo: Number(r['رقم الجلوس']), 
+                        grade: String(grade) 
+                    });
+                });
+                await batch.commit(); alert("تم رفع " + rows.length + " طالب بنجاح");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // تصدير الدرجات
+        async function exportData() {
+            const grade = document.getElementById('expGrade').value;
+            const sSnap = await db.collection('students').where('grade','==',grade).get();
+            const gSnap = await db.collection('grades').get();
+            
+            const gMap = {};
+            gSnap.forEach(d => { const g = d.data(); gMap[`${g.sid}_${g.type}`] = g.score; });
+
+            const report = sSnap.docs.map(doc => {
+                const s = doc.data();
+                const t = gMap[`${doc.id}_t`] || 0;
+                const v = gMap[`${doc.id}_v`] || 0;
+                const s_score = gMap[`${doc.id}_s`] || 0;
+                const ex = (gMap[`${doc.id}_ex1`] || 0) + (gMap[`${doc.id}_ex2`] || 0);
+                return {
+                    "رقم الجلوس": s.seatNo, "الاسم": s.name, "الفصل": s.class,
+                    "التقييم(20)": t, "الواجب(10)": v, "السلوك(10)": s_score, "الاختبارات(30)": ex, "المجموع(70)": t+v+s_score+ex
+                };
+            }).sort((a,b) => a['رقم الجلوس'] - b['رقم الجلوس']);
+
+            const ws = XLSX.utils.json_to_sheet(report);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "نتائج");
+            XLSX.writeFile(wb, `Grade_${grade}_Final.xlsx`);
+        }
+        window.onload = loadTeachers;
+    </script>
+</body>
+</html>
+
