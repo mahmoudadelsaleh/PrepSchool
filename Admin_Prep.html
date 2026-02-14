@@ -3,92 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة الإعدادي - التحكم الكامل</title>
+    <title>إدارة الإعدادي - التحكم الكامل المطور</title>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="firebase-config.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f8fafc; text-align: center; padding: 15px; margin: 0; direction: rtl; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f1f5f9; text-align: center; padding: 10px; margin: 0; direction: rtl; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: right; }
-        h2 { color: #1e293b; text-align: center; }
-        h3 { color: #3b82f6; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin: 10px 0; box-sizing: border-box; font-size: 16px; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin: 5px 0; }
-        .blue { background: #3b82f6; } .green { background: #10b981; } .red { background: #ef4444; } .gray { background: #64748b; }
-        .teacher-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e293b; text-align: center; margin: 20px 0; }
+        h3 { color: #3b82f6; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-top: 0; font-size: 18px; }
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin: 8px 0; box-sizing: border-box; font-size: 15px; outline: none; }
+        input:focus { border-color: #3b82f6; }
+        .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin: 5px 0; transition: 0.3s; }
+        .btn:active { transform: scale(0.98); }
+        .blue { background: #3b82f6; } .green { background: #10b981; } .red { background: #ef4444; } .orange { background: #f59e0b; }
+        
+        .teacher-item { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
+        .teacher-info { margin-bottom: 10px; }
+        .teacher-info strong { color: #1e293b; display: block; font-size: 16px; }
+        .teacher-info span { color: #64748b; font-size: 13px; }
+        .teacher-actions { display: flex; gap: 8px; }
+        .btn-sm { flex: 1; padding: 8px; border-radius: 6px; border: none; color: white; cursor: pointer; font-size: 13px; }
+        
+        .badge { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 5px; font-size: 12px; margin: 2px; display: inline-block; }
     </style>
 </head>
 <body>
     <h2>⚙️ لوحة الإدارة والتحكم</h2>
-    
+
     <div class="card">
-        <h3>👨‍🏫 إدارة المعلمين</h3>
+        <h3>👨‍🏫 إضافة وتعديل المعلمين</h3>
         <input type="text" id="tName" placeholder="اسم المعلم">
         <input type="text" id="tID" placeholder="كود المستخدم (ID)">
-        <input type="password" id="tPass" placeholder="كلمة المرور">
+        <input type="text" id="tPass" placeholder="كلمة المرور">
+        
+        <p style="font-size: 13px; color: #64748b; margin: 5px 0;">الفصول المسندة (اكتب الفصول مفصولة بفصلة مثل: 1/1, 1/2)</p>
+        <input type="text" id="tClasses" placeholder="مثال: 1/1, 1/2, 2/1">
+        
         <select id="tRole">
             <option value="teacher">معلم (رصد فقط)</option>
             <option value="admin">أدمن (تحكم كامل)</option>
         </select>
-        <button class="btn blue" onclick="addTeacher()">إضافة / تحديث معلم</button>
-        <div id="teachersList" style="margin-top:15px;"></div>
+        
+        <button class="btn blue" id="mainBtn" onclick="addTeacher()">إضافة معلم جديد</button>
+        <button class="btn orange" id="cancelBtn" style="display:none;" onclick="resetForm()">إلغاء التعديل</button>
+        
+        <div id="teachersList" style="margin-top:20px;">
+            </div>
     </div>
 
     <div class="card">
         <h3>📤 رفع بيانات الطلاب (Excel)</h3>
-        <p style="font-size:12px; color:gray;">الأعمدة المطلوبة: الاسم، الفصل، رقم الجلوس</p>
-        <div style="background:#f1f5f9; padding:10px; border-radius:10px; margin-bottom:10px;">
+        <div style="background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:10px; border: 1px dashed #cbd5e1;">
             <strong>الصف الأول:</strong>
-            <input type="file" id="file1">
+            <input type="file" id="file1" accept=".xlsx, .xls">
             <button class="btn green" onclick="upload(1)">رفع القائمة</button>
         </div>
-        <div style="background:#f1f5f9; padding:10px; border-radius:10px;">
+        <div style="background:#f8fafc; padding:12px; border-radius:10px; border: 1px dashed #cbd5e1;">
             <strong>الصف الثاني:</strong>
-            <input type="file" id="file2">
+            <input type="file" id="file2" accept=".xlsx, .xls">
             <button class="btn green" onclick="upload(2)">رفع القائمة</button>
         </div>
     </div>
 
     <div class="card">
         <h3>📊 استخراج الدرجات (70 درجة)</h3>
-        <select id="expGrade"><option value="1">الصف الأول</option><option value="2">الصف الثاني</option></select>
-        <button class="btn red" onclick="exportData()">تصدير شيت الكنترول</button>
+        <select id="expGrade">
+            <option value="1">الصف الأول الإعدادي</option>
+            <option value="2">الصف الثاني الإعدادي</option>
+        </select>
+        <button class="btn red" onclick="exportData()">تصدير شيت الكنترول (Excel)</button>
     </div>
 
     <script>
-        // إدارة المعلمين
+        // --- إدارة المعلمين ---
+
+        // دالة إضافة أو تحديث معلم
         async function addTeacher() {
             const id = document.getElementById('tID').value.trim();
-            const name = document.getElementById('tName').value;
-            const pass = document.getElementById('tPass').value;
+            const name = document.getElementById('tName').value.trim();
+            const pass = document.getElementById('tPass').value.trim();
             const role = document.getElementById('tRole').value;
-            if(!id || !name || !pass) return alert("أكمل البيانات");
-            await db.collection('teachers').doc(id).set({ name, pass, role });
-            alert("تم الحفظ");
-            loadTeachers();
+            const classesInput = document.getElementById('tClasses').value.trim();
+            
+            if(!id || !name || !pass) return alert("يرجى ملء البيانات الأساسية");
+
+            // تحويل الفصول إلى مصفوفة نظيفة
+            const classesArray = classesInput ? classesInput.split(',').map(c => c.trim()) : [];
+
+            try {
+                await db.collection('teachers').doc(id).set({
+                    name: name,
+                    pass: pass,
+                    role: role,
+                    assignedClasses: classesArray,
+                    lastUpdate: Date.now()
+                }, { merge: true });
+
+                alert("✅ تم حفظ بيانات المعلم بنجاح");
+                resetForm();
+                loadTeachers();
+            } catch (error) {
+                alert("❌ خطأ في الحفظ: " + error.message);
+            }
         }
 
+        // دالة تحميل المعلمين وعرضهم
         async function loadTeachers() {
-            const snap = await db.collection('teachers').get();
-            let html = '';
-            snap.forEach(doc => {
-                const t = doc.data();
-                html += `<div class="teacher-item">
-                    <span>${t.name} (${doc.id})</span>
-                    <button class="red" style="padding:5px 10px; border-radius:5px; border:none; color:white;" onclick="deleteTeacher('${doc.id}')">حذف</button>
-                </div>`;
-            });
-            document.getElementById('teachersList').innerHTML = html;
+            const listDiv = document.getElementById('teachersList');
+            listDiv.innerHTML = "<p style='text-align:center;'>جاري تحميل المعلمين...</p>";
+            
+            try {
+                const snap = await db.collection('teachers').get();
+                let html = '<h3>القائمة الحالية</h3>';
+                
+                snap.forEach(doc => {
+                    const t = doc.data();
+                    const classesHtml = t.assignedClasses ? t.assignedClasses.map(c => `<span class="badge">${c}</span>`).join('') : 'لا يوجد';
+                    
+                    html += `
+                    <div class="teacher-item">
+                        <div class="teacher-info">
+                            <strong>${t.name} <small>(${doc.id})</small></strong>
+                            <span>الرتبة: ${t.role === 'admin' ? 'أدمن' : 'معلم'}</span>
+                            <div style="margin-top:5px;">${classesHtml}</div>
+                        </div>
+                        <div class="teacher-actions">
+                            <button class="btn-sm blue" onclick="editTeacher('${doc.id}', '${t.name}', '${t.pass}', '${t.role}', '${t.assignedClasses ? t.assignedClasses.join(', ') : ''}')">تعديل</button>
+                            <button class="btn-sm red" onclick="deleteTeacher('${doc.id}')">حذف</button>
+                        </div>
+                    </div>`;
+                });
+                listDiv.innerHTML = html;
+            } catch (error) {
+                listDiv.innerHTML = "خطأ في تحميل البيانات";
+            }
+        }
+
+        // دالة تعبئة النموذج للتعديل
+        function editTeacher(id, name, pass, role, classes) {
+            document.getElementById('tID').value = id;
+            document.getElementById('tID').readOnly = true; // منع تعديل الكود الأساسي
+            document.getElementById('tName').value = name;
+            document.getElementById('tPass').value = pass;
+            document.getElementById('tRole').value = role;
+            document.getElementById('tClasses').value = classes;
+            
+            document.getElementById('mainBtn').innerText = "تحديث البيانات";
+            document.getElementById('cancelBtn').style.display = "block";
+            window.scrollTo(0, 0);
+        }
+
+        // إعادة ضبط النموذج
+        function resetForm() {
+            document.getElementById('tID').value = "";
+            document.getElementById('tID').readOnly = false;
+            document.getElementById('tName').value = "";
+            document.getElementById('tPass').value = "";
+            document.getElementById('tClasses').value = "";
+            document.getElementById('tRole').value = "teacher";
+            document.getElementById('mainBtn').innerText = "إضافة معلم جديد";
+            document.getElementById('cancelBtn').style.display = "none";
         }
 
         async function deleteTeacher(id) {
-            if(confirm("حذف هذا المعلم؟")) { await db.collection('teachers').doc(id).delete(); loadTeachers(); }
+            if(confirm(`هل أنت متأكد من حذف المعلم (${id})؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+                await db.collection('teachers').doc(id).delete();
+                loadTeachers();
+            }
         }
 
-        // رفع الطلاب
+        // --- وظائف رفع الطلاب والتصدير تظل كما هي ---
+        
         async function upload(grade) {
-            const file = document.getElementById('file'+grade).files[0];
+            const fileInput = document.getElementById('file'+grade);
+            const file = fileInput.files[0];
             if(!file) return alert("اختر ملف أولاً");
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -105,17 +195,17 @@
                         grade: String(grade) 
                     });
                 });
-                await batch.commit(); alert("تم رفع " + rows.length + " طالب بنجاح");
+                await batch.commit(); 
+                alert("تم رفع " + rows.length + " طالب بنجاح");
+                fileInput.value = "";
             };
             reader.readAsArrayBuffer(file);
         }
 
-        // تصدير الدرجات
         async function exportData() {
             const grade = document.getElementById('expGrade').value;
             const sSnap = await db.collection('students').where('grade','==',grade).get();
             const gSnap = await db.collection('grades').get();
-            
             const gMap = {};
             gSnap.forEach(d => { const g = d.data(); gMap[`${g.sid}_${g.type}`] = g.score; });
 
@@ -136,8 +226,8 @@
             XLSX.utils.book_append_sheet(wb, ws, "نتائج");
             XLSX.writeFile(wb, `Grade_${grade}_Final.xlsx`);
         }
+
         window.onload = loadTeachers;
     </script>
 </body>
 </html>
-
