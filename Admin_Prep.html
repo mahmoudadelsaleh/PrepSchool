@@ -3,203 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة الإعدادي - التحكم الكامل المطور</title>
+    <title>إدارة الإعدادي - التحكم المطور</title>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="firebase-config.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f1f5f9; text-align: center; padding: 10px; margin: 0; direction: rtl; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: right; }
-        h2 { color: #1e293b; text-align: center; margin: 20px 0; }
-        h3 { color: #3b82f6; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-top: 0; font-size: 18px; }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin: 8px 0; box-sizing: border-box; font-size: 15px; outline: none; }
-        input:focus { border-color: #3b82f6; }
-        .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin: 5px 0; transition: 0.3s; }
+        :root { --primary: #2563eb; --secondary: #64748b; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); text-align: center; padding: 10px; margin: 0; direction: rtl; color: #1e293b; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: right; border: 1px solid #e2e8f0; }
+        h2 { color: #0f172a; margin: 20px 0; font-weight: 800; }
+        h3 { color: var(--primary); border-right: 4px solid var(--primary); padding-right: 10px; margin-top: 0; font-size: 18px; }
+        input, select { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin: 8px 0; box-sizing: border-box; font-size: 15px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        /* تنسيق مربعات الاختيار */
+        .class-selector { background: #f1f5f9; padding: 15px; border-radius: 12px; margin: 10px 0; border: 1px solid #e2e8f0; }
+        .class-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+        .check-item { display: flex; align-items: center; background: white; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer; justify-content: center; font-size: 14px; font-weight: bold; }
+        .check-item input { width: auto; margin-left: 8px; cursor: pointer; }
+        .check-item:has(input:checked) { background: #dbeafe; border-color: var(--primary); color: var(--primary); }
+
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin: 5px 0; transition: 0.2s; display: block; }
         .btn:active { transform: scale(0.98); }
-        .blue { background: #3b82f6; } .green { background: #10b981; } .red { background: #ef4444; } .orange { background: #f59e0b; }
+        .blue { background: var(--primary); } .green { background: var(--success); } .red { background: var(--danger); } .orange { background: var(--warning); }
         
-        .teacher-item { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
-        .teacher-info { margin-bottom: 10px; }
-        .teacher-info strong { color: #1e293b; display: block; font-size: 16px; }
-        .teacher-info span { color: #64748b; font-size: 13px; }
-        .teacher-actions { display: flex; gap: 8px; }
-        .btn-sm { flex: 1; padding: 8px; border-radius: 6px; border: none; color: white; cursor: pointer; font-size: 13px; }
-        
-        .badge { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 5px; font-size: 12px; margin: 2px; display: inline-block; }
+        .teacher-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .teacher-header { display: flex; justify-content: space-between; align-items: center; }
+        .teacher-name { font-weight: bold; font-size: 16px; color: #1e293b; }
+        .badge { background: #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 8px; font-size: 12px; margin-left: 4px; display: inline-block; font-weight: 600; }
+        .admin-badge { background: #fef3c7; color: #92400e; }
+        .actions { display: flex; gap: 10px; margin-top: 5px; }
+        .actions button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; }
     </style>
 </head>
 <body>
-    <h2>⚙️ لوحة الإدارة والتحكم</h2>
+    <h2>⚙️ لوحة التحكم الإدارية</h2>
 
     <div class="card">
-        <h3>👨‍🏫 إضافة وتعديل المعلمين</h3>
-        <input type="text" id="tName" placeholder="اسم المعلم">
+        <h3>👨‍🏫 ملف المعلم</h3>
+        <input type="text" id="tName" placeholder="الاسم بالكامل">
         <input type="text" id="tID" placeholder="كود المستخدم (ID)">
         <input type="text" id="tPass" placeholder="كلمة المرور">
         
-        <p style="font-size: 13px; color: #64748b; margin: 5px 0;">الفصول المسندة (اكتب الفصول مفصولة بفصلة مثل: 1/1, 1/2)</p>
-        <input type="text" id="tClasses" placeholder="مثال: 1/1, 1/2, 2/1">
+        <div class="class-selector">
+            <strong style="font-size: 14px; color: #475569;">الفصول المسندة:</strong>
+            <p style="font-size: 12px; color: var(--primary); margin: 5px 0;">الصف الأول</p>
+            <div class="class-group">
+                <label class="check-item"><input type="checkbox" name="fClass" value="1/1"> 1/1</label>
+                <label class="check-item"><input type="checkbox" name="fClass" value="1/2"> 1/2</label>
+                <label class="check-item"><input type="checkbox" name="fClass" value="1/3"> 1/3</label>
+                <label class="check-item"><input type="checkbox" name="fClass" value="1/4"> 1/4</label>
+                <label class="check-item"><input type="checkbox" name="fClass" value="1/5"> 1/5</label>
+            </div>
+            <p style="font-size: 12px; color: var(--primary); margin: 10px 0 5px 0;">الصف الثاني</p>
+            <div class="class-group">
+                <label class="check-item"><input type="checkbox" name="fClass" value="2/1"> 2/1</label>
+                <label class="check-item"><input type="checkbox" name="fClass" value="2/2"> 2/2</label>
+                <label class="check-item"><input type="checkbox" name="fClass" value="2/3"> 2/3</label>
+            </div>
+        </div>
         
         <select id="tRole">
-            <option value="teacher">معلم (رصد فقط)</option>
-            <option value="admin">أدمن (تحكم كامل)</option>
+            <option value="teacher">صلاحية: معلم (رصد فقط)</option>
+            <option value="admin">صلاحية: أدمن (تحكم كامل)</option>
         </select>
         
-        <button class="btn blue" id="mainBtn" onclick="addTeacher()">إضافة معلم جديد</button>
+        <button class="btn blue" id="mainBtn" onclick="addTeacher()">حفظ بيانات المعلم</button>
         <button class="btn orange" id="cancelBtn" style="display:none;" onclick="resetForm()">إلغاء التعديل</button>
         
-        <div id="teachersList" style="margin-top:20px;">
-            </div>
+        <div id="teachersList" style="margin-top:25px; border-top: 2px solid #f1f5f9; padding-top: 15px;"></div>
     </div>
 
     <div class="card">
-        <h3>📤 رفع بيانات الطلاب (Excel)</h3>
-        <div style="background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:10px; border: 1px dashed #cbd5e1;">
-            <strong>الصف الأول:</strong>
+        <h3>📤 تحديث قوائم الطلاب</h3>
+        <div style="background:#f8fafc; padding:15px; border-radius:15px; border: 2px dashed #cbd5e1;">
+            <label style="display:block; margin-bottom:10px; font-weight:bold;">الصف الأول الإعدادي</label>
             <input type="file" id="file1" accept=".xlsx, .xls">
-            <button class="btn green" onclick="upload(1)">رفع القائمة</button>
-        </div>
-        <div style="background:#f8fafc; padding:12px; border-radius:10px; border: 1px dashed #cbd5e1;">
-            <strong>الصف الثاني:</strong>
+            <button class="btn green" onclick="upload(1)">رفع الملف المختار</button>
+            <hr style="border:0; border-top:1px solid #e2e8f0; margin:15px 0;">
+            <label style="display:block; margin-bottom:10px; font-weight:bold;">الصف الثاني الإعدادي</label>
             <input type="file" id="file2" accept=".xlsx, .xls">
-            <button class="btn green" onclick="upload(2)">رفع القائمة</button>
+            <button class="btn green" onclick="upload(2)">رفع الملف المختار</button>
         </div>
     </div>
 
     <div class="card">
-        <h3>📊 استخراج الدرجات (70 درجة)</h3>
+        <h3>📊 تصدير النتائج النهائية</h3>
         <select id="expGrade">
-            <option value="1">الصف الأول الإعدادي</option>
-            <option value="2">الصف الثاني الإعدادي</option>
+            <option value="1">الصف الأول</option>
+            <option value="2">الصف الثاني</option>
         </select>
-        <button class="btn red" onclick="exportData()">تصدير شيت الكنترول (Excel)</button>
+        <button class="btn red" onclick="exportData()">تحميل شيت الـ 70 درجة (Excel)</button>
     </div>
 
     <script>
-        // --- إدارة المعلمين ---
+        const currentAdmin = sessionStorage.getItem('userEmail');
 
-        // دالة إضافة أو تحديث معلم
         async function addTeacher() {
             const id = document.getElementById('tID').value.trim();
             const name = document.getElementById('tName').value.trim();
             const pass = document.getElementById('tPass').value.trim();
             const role = document.getElementById('tRole').value;
-            const classesInput = document.getElementById('tClasses').value.trim();
             
-            if(!id || !name || !pass) return alert("يرجى ملء البيانات الأساسية");
+            const selectedClasses = Array.from(document.querySelectorAll('input[name="fClass"]:checked')).map(cb => cb.value);
 
-            // تحويل الفصول إلى مصفوفة نظيفة
-            const classesArray = classesInput ? classesInput.split(',').map(c => c.trim()) : [];
+            if(!id || !name || !pass) return alert("أكمل جميع الحقول المطلوبة");
 
             try {
                 await db.collection('teachers').doc(id).set({
-                    name: name,
-                    pass: pass,
-                    role: role,
-                    assignedClasses: classesArray,
-                    lastUpdate: Date.now()
+                    name, pass, role, assignedClasses: selectedClasses, updatedAt: Date.now()
                 }, { merge: true });
 
-                alert("✅ تم حفظ بيانات المعلم بنجاح");
+                alert("✅ تم الحفظ بنجاح");
                 resetForm();
                 loadTeachers();
-            } catch (error) {
-                alert("❌ خطأ في الحفظ: " + error.message);
-            }
+            } catch (e) { alert("❌ فشل في الحفظ"); }
         }
 
-        // دالة تحميل المعلمين وعرضهم
         async function loadTeachers() {
             const listDiv = document.getElementById('teachersList');
-            listDiv.innerHTML = "<p style='text-align:center;'>جاري تحميل المعلمين...</p>";
+            listDiv.innerHTML = "جاري التحميل...";
+            const snap = await db.collection('teachers').get();
+            let html = '<h4 style="margin:0 0 15px 0; color:#64748b;">المعلمون المسجلون</h4>';
             
-            try {
-                const snap = await db.collection('teachers').get();
-                let html = '<h3>القائمة الحالية</h3>';
-                
-                snap.forEach(doc => {
-                    const t = doc.data();
-                    const classesHtml = t.assignedClasses ? t.assignedClasses.map(c => `<span class="badge">${c}</span>`).join('') : 'لا يوجد';
-                    
-                    html += `
-                    <div class="teacher-item">
-                        <div class="teacher-info">
-                            <strong>${t.name} <small>(${doc.id})</small></strong>
-                            <span>الرتبة: ${t.role === 'admin' ? 'أدمن' : 'معلم'}</span>
-                            <div style="margin-top:5px;">${classesHtml}</div>
-                        </div>
-                        <div class="teacher-actions">
-                            <button class="btn-sm blue" onclick="editTeacher('${doc.id}', '${t.name}', '${t.pass}', '${t.role}', '${t.assignedClasses ? t.assignedClasses.join(', ') : ''}')">تعديل</button>
-                            <button class="btn-sm red" onclick="deleteTeacher('${doc.id}')">حذف</button>
-                        </div>
-                    </div>`;
-                });
-                listDiv.innerHTML = html;
-            } catch (error) {
-                listDiv.innerHTML = "خطأ في تحميل البيانات";
-            }
+            snap.forEach(doc => {
+                const t = doc.data();
+                const isAdmin = t.role === 'admin';
+                const isMe = doc.id === currentAdmin;
+                const classesHtml = t.assignedClasses ? t.assignedClasses.map(c => `<span class="badge">${c}</span>`).join('') : '';
+
+                html += `
+                <div class="teacher-item">
+                    <div class="teacher-header">
+                        <span class="teacher-name">${t.name} ${isMe ? '<small>(أنت)</small>' : ''}</span>
+                        <span class="badge ${isAdmin ? 'admin-badge' : ''}">${isAdmin ? 'أدمن' : 'معلم'}</span>
+                    </div>
+                    <div style="text-align:right;">${classesHtml}</div>
+                    <div class="actions">
+                        <button style="background:#dbeafe; color:#2563eb;" onclick="editTeacher('${doc.id}', '${t.name}', '${t.pass}', '${t.role}', ${JSON.stringify(t.assignedClasses || [])})">تعديل</button>
+                        ${!isMe ? `<button style="background:#fee2e2; color:#ef4444;" onclick="deleteTeacher('${doc.id}')">حذف</button>` : ''}
+                    </div>
+                </div>`;
+            });
+            listDiv.innerHTML = html;
         }
 
-        // دالة تعبئة النموذج للتعديل
         function editTeacher(id, name, pass, role, classes) {
             document.getElementById('tID').value = id;
-            document.getElementById('tID').readOnly = true; // منع تعديل الكود الأساسي
+            document.getElementById('tID').readOnly = true;
             document.getElementById('tName').value = name;
             document.getElementById('tPass').value = pass;
             document.getElementById('tRole').value = role;
-            document.getElementById('tClasses').value = classes;
             
+            // ضبط مربعات الاختيار
+            document.querySelectorAll('input[name="fClass"]').forEach(cb => {
+                cb.checked = classes.includes(cb.value);
+            });
+
             document.getElementById('mainBtn').innerText = "تحديث البيانات";
             document.getElementById('cancelBtn').style.display = "block";
-            window.scrollTo(0, 0);
+            window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        // إعادة ضبط النموذج
         function resetForm() {
             document.getElementById('tID').value = "";
             document.getElementById('tID').readOnly = false;
             document.getElementById('tName').value = "";
             document.getElementById('tPass').value = "";
-            document.getElementById('tClasses').value = "";
             document.getElementById('tRole').value = "teacher";
-            document.getElementById('mainBtn').innerText = "إضافة معلم جديد";
+            document.querySelectorAll('input[name="fClass"]').forEach(cb => cb.checked = false);
+            document.getElementById('mainBtn').innerText = "حفظ بيانات المعلم";
             document.getElementById('cancelBtn').style.display = "none";
         }
 
         async function deleteTeacher(id) {
-            if(confirm(`هل أنت متأكد من حذف المعلم (${id})؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+            if(confirm("هل تريد حذف هذا المعلم نهائياً؟")) {
                 await db.collection('teachers').doc(id).delete();
                 loadTeachers();
             }
         }
 
-        // --- وظائف رفع الطلاب والتصدير تظل كما هي ---
-        
+        // دوال الرفع والتصدير (نفس المنطق السابق مع تحسين التنبيهات)
         async function upload(grade) {
             const fileInput = document.getElementById('file'+grade);
-            const file = fileInput.files[0];
-            if(!file) return alert("اختر ملف أولاً");
+            if(!fileInput.files[0]) return alert("اختر ملف إكسيل أولاً");
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
+                const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const batch = db.batch();
                 rows.forEach(r => {
                     const ref = db.collection('students').doc();
-                    batch.set(ref, { 
-                        name: r.الاسم, 
-                        class: String(r.الفصل), 
-                        seatNo: Number(r['رقم الجلوس']), 
-                        grade: String(grade) 
-                    });
+                    batch.set(ref, { name: r.الاسم, class: String(r.الفصل), seatNo: Number(r['رقم الجلوس']), grade: String(grade) });
                 });
-                await batch.commit(); 
-                alert("تم رفع " + rows.length + " طالب بنجاح");
+                await batch.commit(); alert(`تم بنجاح رفع ${rows.length} طالب`);
                 fileInput.value = "";
             };
-            reader.readAsArrayBuffer(file);
+            reader.readAsArrayBuffer(fileInput.files[0]);
         }
 
         async function exportData() {
@@ -208,23 +209,15 @@
             const gSnap = await db.collection('grades').get();
             const gMap = {};
             gSnap.forEach(d => { const g = d.data(); gMap[`${g.sid}_${g.type}`] = g.score; });
-
             const report = sSnap.docs.map(doc => {
-                const s = doc.data();
-                const t = gMap[`${doc.id}_t`] || 0;
-                const v = gMap[`${doc.id}_v`] || 0;
-                const s_score = gMap[`${doc.id}_s`] || 0;
-                const ex = (gMap[`${doc.id}_ex1`] || 0) + (gMap[`${doc.id}_ex2`] || 0);
-                return {
-                    "رقم الجلوس": s.seatNo, "الاسم": s.name, "الفصل": s.class,
-                    "التقييم(20)": t, "الواجب(10)": v, "السلوك(10)": s_score, "الاختبارات(30)": ex, "المجموع(70)": t+v+s_score+ex
-                };
+                const s = doc.data(); const sid = doc.id;
+                const t=gMap[sid+'_t']||0, v=gMap[sid+'_v']||0, sc=gMap[sid+'_s']||0, ex=(gMap[sid+'_ex1']||0)+(gMap[sid+'_ex2']||0);
+                return { "رقم الجلوس": s.seatNo, "الاسم": s.name, "الفصل": s.class, "تقييم(20)": t, "واجب(10)": v, "سلوك(10)": sc, "اختبارات(30)": ex, "المجموع(70)": t+v+sc+ex };
             }).sort((a,b) => a['رقم الجلوس'] - b['رقم الجلوس']);
-
             const ws = XLSX.utils.json_to_sheet(report);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "نتائج");
-            XLSX.writeFile(wb, `Grade_${grade}_Final.xlsx`);
+            XLSX.writeFile(wb, `نتائج_الصف_${grade}.xlsx`);
         }
 
         window.onload = loadTeachers;
