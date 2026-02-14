@@ -4,28 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>تسجيل الدخول - نظام الإعدادي</title>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
     <script src="firebase-config.js"></script>
+
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .login-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #1e293b; margin-bottom: 25px; }
-        input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 12px; box-sizing: border-box; font-size: 16px; text-align: center; outline: none; }
-        input:focus { border-color: #3b82f6; }
-        button { width: 100%; padding: 15px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 18px; transition: 0.3s; }
-        button:active { transform: scale(0.98); }
-        #msg { color: #ef4444; margin-top: 15px; font-weight: bold; min-height: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .login-card { background: white; padding: 35px 25px; border-radius: 24px; box-shadow: 0 15px 35px rgba(30, 41, 59, 0.15); width: 100%; max-width: 400px; text-align: center; border: 1px solid #e2e8f0; }
+        .icon-box { font-size: 55px; margin-bottom: 15px; display: inline-block; }
+        h2 { color: #1e293b; margin-bottom: 25px; font-size: 22px; font-weight: 800; }
+        input { width: 100%; padding: 16px; margin-bottom: 16px; border: 2px solid #e2e8f0; border-radius: 14px; box-sizing: border-box; font-size: 16px; text-align: center; outline: none; transition: 0.3s; }
+        input:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        button { width: 100%; padding: 16px; background: #2563eb; color: white; border: none; border-radius: 14px; font-weight: bold; cursor: pointer; font-size: 18px; transition: 0.3s; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
+        button:hover { background: #1d4ed8; }
+        button:active { transform: scale(0.97); }
+        #msg { color: #ef4444; margin-top: 20px; font-size: 14px; font-weight: 600; min-height: 20px; line-height: 1.5; }
     </style>
 </head>
 <body>
+
     <div class="login-card">
-        <div style="font-size: 50px; margin-bottom: 10px;">🏫</div>
+        <div class="icon-box">🏫</div>
         <h2>دخول النظام الموحد</h2>
-        <input type="text" id="user" placeholder="اسم المستخدم (ID)">
-        <input type="password" id="pass" placeholder="كلمة المرور">
-        <button onclick="login()">دخول</button>
-        <p id="msg"></p>
+        <input type="text" id="user" placeholder="اسم المستخدم (ID)" autocomplete="username">
+        <input type="password" id="pass" placeholder="كلمة المرور" autocomplete="current-password">
+        <button onclick="login()">دخول النظام</button>
+        <div id="msg"></div>
     </div>
 
     <script>
@@ -33,23 +39,57 @@
             const u = document.getElementById('user').value.trim();
             const p = document.getElementById('pass').value.trim();
             const msg = document.getElementById('msg');
-            if(!u || !p) { msg.innerText = "يرجى إدخال البيانات"; return; }
             
-            msg.innerText = "⏳ جاري التحقق...";
+            // إعادة ضبط الرسالة
+            msg.style.color = "#ef4444";
+            if(!u || !p) { msg.innerText = "⚠️ يرجى إدخال اسم المستخدم وكلمة المرور"; return; }
+
+            msg.style.color = "#3b82f6";
+            msg.innerText = "⏳ جاري التحقق من البيانات...";
+
             try {
-                const doc = await db.collection('teachers').doc(u).get();
-                if (doc.exists && doc.data().pass === p) {
-                    sessionStorage.setItem('userEmail', u);
-                    sessionStorage.setItem('userName', doc.data().name);
-                    location.href = doc.data().role === 'admin' ? 'Admin_Prep.html' : 'Teacher_Prep.html';
+                // التأكد من أن db معرفة من ملف الإعدادات
+                if (typeof db === 'undefined') {
+                    throw new Error("لم يتم تحميل قاعدة البيانات، تأكد من ملف firebase-config.js");
+                }
+
+                const docRef = db.collection('teachers').doc(u);
+                const doc = await docRef.get();
+
+                if (doc.exists) {
+                    const userData = doc.data();
+                    if (userData.pass === p) {
+                        // حفظ البيانات في الجلسة
+                        sessionStorage.setItem('userEmail', u);
+                        sessionStorage.setItem('userName', userData.name || "معلم");
+                        sessionStorage.setItem('userRole', userData.role);
+
+                        msg.style.color = "#10b981";
+                        msg.innerText = "✅ تم الدخول بنجاح! جاري التوجيه...";
+                        
+                        // التوجيه بناءً على الصلاحية
+                        setTimeout(() => {
+                            window.location.href = userData.role === 'admin' ? 'Admin_Prep.html' : 'Teacher_Prep.html';
+                        }, 800);
+                    } else {
+                        msg.style.color = "#ef4444";
+                        msg.innerText = "❌ كلمة المرور غير صحيحة";
+                    }
                 } else {
-                    msg.innerText = "❌ خطأ في اسم المستخدم أو كلمة المرور";
+                    msg.style.color = "#ef4444";
+                    msg.innerText = "❌ اسم المستخدم هذا غير مسجل لدينا";
                 }
             } catch (e) {
-                msg.innerText = "❌ فشل الاتصال بالقاعدة";
+                console.error("Login Error:", e);
+                msg.style.color = "#ef4444";
+                msg.innerText = "❌ فشل الاتصال: تأكد من إعدادات Firestore والإنترنت";
             }
         }
+
+        // تفعيل الدخول عند الضغط على زر Enter
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { login(); }
+        });
     </script>
 </body>
 </html>
-
