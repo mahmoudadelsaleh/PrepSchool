@@ -3,51 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام الرصد الاحترافي - الإصدار الهندسي</title>
+    <title>نظام الرصد الذكي - نسخة المعلم</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     
     <style>
         :root { --primary: #0f172a; --accent: #2563eb; --bg: #f1f5f9; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding-bottom: 250px; direction: rtl; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding-bottom: 280px; direction: rtl; }
         
-        /* الهيدر المطور */
-        header { background: var(--primary); color: white; padding: 10px; position: sticky; top: 0; z-index: 1000; border-radius: 0 0 15px 15px; }
-        .header-info { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
-        .header-info span { color: #60a5fa; font-weight: bold; }
-        .controls { display: flex; gap: 5px; }
-        select { flex: 1; padding: 8px; border-radius: 8px; border: none; font-weight: bold; font-size: 13px; }
+        header { background: var(--primary); color: white; padding: 12px; position: sticky; top: 0; z-index: 1000; border-radius: 0 0 15px 15px; }
+        .header-info { display: flex; justify-content: space-around; font-size: 11px; margin-bottom: 8px; color: #94a3b8; }
+        .header-info span { color: #f8fafc; font-weight: bold; }
+        .controls { display: flex; gap: 6px; }
+        select { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px; }
 
         .container { padding: 10px; max-width: 500px; margin: auto; }
-        .student-card { background: white; padding: 10px; border-radius: 12px; margin-bottom: 8px; border: 2px solid transparent; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .student-card.active-now { border-color: var(--accent); background: #f0f7ff; transform: scale(1.01); }
-        .name-row { font-weight: bold; font-size: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .student-card { background: white; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 2.5px solid transparent; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .student-card.active-now { border-color: var(--accent); background: #f0f7ff; }
+        .name-row { font-weight: bold; font-size: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; }
         
-        .btn-group { display: flex; gap: 5px; }
-        .score-box { flex: 1; height: 45px; border: 1.5px solid #cbd5e1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; }
-        .score-box.active { border-color: var(--accent); background: #dbeafe; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); }
-        .score-box small { font-size: 9px; color: #64748b; }
-        .score-box span { font-weight: 900; font-size: 18px; color: var(--accent); }
+        .btn-group { display: flex; gap: 6px; }
+        .score-box { flex: 1; height: 50px; border: 1.5px solid #cbd5e1; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; cursor: pointer; }
+        .score-box.active { border-color: var(--accent); background: #dbeafe; }
+        .score-box small { font-size: 10px; color: #64748b; }
+        .score-box span { font-weight: 900; font-size: 20px; color: var(--accent); }
 
-        /* اللوحة الهندسية */
+        /* لوحة المفاتيح الهندسية */
         .numpad { 
-            position: fixed; bottom: 5px; left: 5px; right: 5px; 
-            background: #cbd5e1; padding: 8px; display: none; 
-            gap: 5px; border-radius: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.3); z-index: 2000;
+            position: fixed; bottom: 8px; left: 8px; right: 8px; 
+            background: #cbd5e1; padding: 10px; display: none; 
+            gap: 6px; border-radius: 18px; box-shadow: 0 -5px 30px rgba(0,0,0,0.3); z-index: 2000;
         }
         .key { 
-            background: #f8fafc; border-radius: 8px; font-weight: 900; 
+            background: #f8fafc; border-radius: 10px; font-weight: 900; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 18px; color: #1e293b; border-bottom: 4px solid #94a3b8; 
-            cursor: pointer; user-select: none;
+            font-size: 22px; color: #1e293b; border-bottom: 5px solid #94a3b8; 
+            cursor: pointer; height: 50px;
         }
-        .key:active { border-bottom-width: 1px; transform: translateY(3px); background: var(--accent); color: white; }
+        .key:active { border-bottom-width: 1px; transform: translateY(4px); background: var(--accent); color: white; }
         
-        /* ألوان أزرار التحكم */
-        .apply-all { background: #059669; color: white; border-bottom-color: #047857; font-size: 12px; grid-column: span 3; height: 35px; }
-        .skip-key { background: #64748b; color: white; border-bottom-color: #475569; font-size: 12px; grid-column: span 3; height: 35px; }
-        .close-key { background: #e11d48; color: white; border-bottom-color: #be123c; grid-column: span 100; height: 30px; font-size: 11px; margin-top: 2px; }
+        /* أزرار الوظائف */
+        .btn-all { background: #059669; color: white; border-bottom-color: #047857; font-size: 14px; grid-column: span 3; }
+        .btn-skip { background: #64748b; color: white; border-bottom-color: #475569; font-size: 14px; grid-column: span 3; }
+        .btn-close { background: #e11d48; color: white; border-bottom-color: #be123c; grid-column: span 100; height: 35px; font-size: 12px; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -80,7 +79,6 @@
     async function init() {
         if(!tID) { location.href='index.html'; return; }
         document.getElementById('dispT').innerText = sessionStorage.getItem('userName') || tID;
-        // جلب بيانات المادة من السيرفر لو موجودة
         const tDoc = await db.collection('teachers').doc(tID).get();
         if(tDoc.exists) {
             const data = tDoc.data();
@@ -144,7 +142,8 @@
         document.getElementById(`card_${sid}`).classList.add('active-now');
         document.getElementById(`box_${sid}_${type}`).classList.add('active');
         
-        window.scrollTo({ top: document.getElementById(`card_${sid}`).offsetTop - 100, behavior: 'smooth' });
+        const card = document.getElementById(`card_${sid}`);
+        window.scrollTo({ top: card.offsetTop - 80, behavior: 'smooth' });
 
         const pad = document.getElementById('numpad');
         pad.style.display = 'grid';
@@ -161,17 +160,14 @@
         } else if(max === 15) {
             pad.style.gridTemplateColumns = 'repeat(6, 1fr)';
             for(let k=1; k<=15; k++) {
-                keys += `<div class="key" style="height:45px" onclick="saveGrade(${k})">${toAr(k)}</div>`;
-                if(k === 5 || k === 10) keys += `<div id="ph"></div>`; // Placeholder
+                keys += `<div class="key" id="k${k}" onclick="saveGrade(${k})">${toAr(k)}</div>`;
+                if(k === 5) keys += `<div class="key" style="grid-row: span 3; height: 162px;" onclick="saveGrade(0)">${toAr(0)}</div>`;
             }
-            // استبدال الـ placeholders بالصفر الطولي
-            keys = keys.replace('<div id="ph"></div>', `<div class="key" style="grid-row: span 3; height: 145px;" onclick="saveGrade(0)">${toAr(0)}</div>`);
-            keys = keys.replace('<div id="ph"></div>', '');
         }
 
-        keys += `<div class="key apply-all" onclick="applyToAll()">للـكـل ✅</div>`;
-        keys += `<div class="key skip-key" onclick="skipStudent()">تخطي ➡️</div>`;
-        keys += `<div class="key close-key" onclick="closePad()">إغلاق اللوحة ×</div>`;
+        keys += `<div class="key btn-all" onclick="applyToAllColumn()">الكل ${type === 't' ? 'تقييم' : type === 'v' ? 'واجب' : 'سلوك'} ✅</div>`;
+        keys += `<div class="key btn-skip" onclick="skipStudent()">تخطي ➡️</div>`;
+        keys += `<div class="key btn-close" onclick="closePad()">إغلاق اللوحة ×</div>`;
         pad.innerHTML = keys;
     }
 
@@ -184,7 +180,7 @@
             sid, type, score: Number(val), week: wk, ts: Date.now()
         }, {merge:true});
 
-        // الانتقال الأفعواني (تقييم -> واجب -> سلوك -> الطالب التالي)
+        // الانتقال الأفعواني (أفقياً ثم لأسفل)
         if(!wk.startsWith('ex')) {
             if(type === 't') { openPad(sid, 'v', 10, idx); return; }
             if(type === 'v') { openPad(sid, 's', 10, idx); return; }
@@ -192,19 +188,19 @@
         skipStudent();
     }
 
-    async function applyToAll() {
+    async function applyToAllColumn() {
         const {type, max} = activeInput;
-        const val = prompt(`درجة الكل في (${type}):`, max);
+        const val = prompt(`أدخل الدرجة لجميع الطلاب في عمود (${type === 't' ? 'التقييم' : type === 'v' ? 'الواجب' : 'السلوك'}):`, max);
         if (val === null || val === "" || isNaN(val)) return;
 
         const wk = document.getElementById('selWeek').value;
         const batch = db.batch();
         students.forEach(s => {
-            const el = document.getElementById(`v_${s.sid}_${type}`);
-            if(el) el.innerText = toAr(val);
+            document.getElementById(`v_${s.sid}_${type}`).innerText = toAr(val);
             batch.set(db.collection('grades').doc(`${s.sid}_${wk}_${type}`), { sid: s.sid, type, score: Number(val), week: wk, ts: Date.now() }, {merge:true});
         });
         await batch.commit();
+        alert("تم رصد العمود بالكامل");
         closePad();
     }
 
@@ -214,7 +210,7 @@
         if(idx < students.length - 1) {
             const next = students[idx+1];
             openPad(next.sid, wk.startsWith('ex')?wk:'t', wk.startsWith('ex')?15:20, idx+1);
-        } else { closePad(); }
+        } else { closePad(); alert("تم إنهاء الفصل!"); }
     }
 
     function closePad() { document.getElementById('numpad').style.display = 'none'; }
