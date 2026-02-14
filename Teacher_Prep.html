@@ -1,66 +1,188 @@
-<style>
-    /* التعديلات الجديدة للوحة المفاتيح */
-    .numpad { 
-        position: fixed; 
-        bottom: 15px; 
-        left: 10px; 
-        right: 10px; 
-        background: rgba(255, 255, 255, 0.9); 
-        backdrop-filter: blur(10px); /* تأثير زجاجي */
-        padding: 12px; 
-        display: none; 
-        grid-template-columns: repeat(5, 1fr); 
-        gap: 6px; 
-        border-radius: 20px; 
-        box-shadow: 0 -10px 30px rgba(0,0,0,0.15), 0 5px 15px rgba(0,0,0,0.1); 
-        z-index: 200; 
-        border: 1px solid rgba(255,255,255,0.3);
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام الرصد الذكي</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <style>
+        :root { --primary: #0f172a; --accent: #3b82f6; --text: #1e293b; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f1f5f9; margin: 0; padding-bottom: 250px; direction: rtl; color: var(--text); }
+        
+        /* الرأس */
+        header { background: var(--primary); color: white; padding: 15px; position: sticky; top: 0; z-index: 100; border-radius: 0 0 20px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .info-bar { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 12px; margin-bottom: 10px; font-size: 12px; display: flex; justify-content: space-around; }
+        .info-bar span { color: #60a5fa; font-weight: bold; }
+        .controls { display: flex; gap: 8px; }
+        select { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: bold; font-size: 14px; outline: none; background: #fff; }
+
+        /* الكروت */
+        .container { padding: 10px; max-width: 500px; margin: auto; }
+        .student-card { background: white; padding: 12px; border-radius: 15px; margin-bottom: 8px; border: 2px solid transparent; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .student-card.active-now { border-color: var(--accent); background: #f0f7ff; transform: scale(1.02); }
+        .name-row { font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        
+        .btn-group { display: flex; gap: 6px; }
+        .score-box { flex: 1; height: 50px; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: #f8fafc; }
+        .score-box.active { border-color: var(--accent); background: #e0efff; }
+        .score-box small { font-size: 9px; color: #64748b; }
+        .score-box span { font-weight: bold; font-size: 18px; color: var(--accent); }
+
+        /* اللوحة المصغرة والجميلة */
+        .numpad { 
+            position: fixed; bottom: 20px; left: 15px; right: 15px; 
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            padding: 10px; display: none; grid-template-columns: repeat(6, 1fr); gap: 5px; 
+            border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 1000;
+            border: 1px solid #ddd;
+        }
+        .key { 
+            background: white; height: 40px; border-radius: 8px; font-weight: bold; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 15px; border: 1px solid #eee; transition: 0.1s;
+        }
+        .key:active { background: var(--accent); color: white; transform: scale(0.9); }
+        .close-key { grid-column: span 6; background: #fff1f2; color: #e11d48; font-size: 12px; height: 30px; margin-top: 5px; border: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="info-bar">
+        <div>مدرس: <span id="dispT">-</span></div>
+        <div>فصل: <span id="dispC">-</span></div>
+    </div>
+    <div class="controls">
+        <select id="selClass" onchange="loadStudents()"></select>
+        <select id="selWeek" onchange="loadStudents()">
+            <script>
+                for(let i=1; i<=14; i++) document.write(`<option value="w${i}">أسبوع ${i}</option>`);
+            </script>
+            <option value="ex1">شهر 1 (15)</option>
+            <option value="ex2">شهر 2 (15)</option>
+        </select>
+    </div>
+</header>
+
+<div class="container" id="list"></div>
+<div class="numpad" id="numpad"></div>
+
+<script>
+    let activeInput = null;
+    let students = [];
+    const tID = sessionStorage.getItem('userEmail');
+
+    async function init() {
+        if(!tID) { location.href='index.html'; return; }
+        document.getElementById('dispT').innerText = sessionStorage.getItem('userName') || tID;
+        
+        try {
+            const doc = await db.collection('teachers').doc(tID).get();
+            if(doc.exists) {
+                const assigned = doc.data().assignedClasses || [];
+                const sel = document.getElementById('selClass');
+                sel.innerHTML = '<option value="">اختر الفصل...</option>';
+                assigned.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+            }
+        } catch(e) { alert("خطأ في جلب الفصول"); }
     }
 
-    .key { 
-        background: #ffffff; 
-        padding: 10px 0; 
-        border-radius: 12px; 
-        font-weight: 700; 
-        cursor: pointer; 
-        font-size: 16px; 
-        text-align: center; 
-        color: #1e293b;
-        border: 1px solid #e2e8f0;
-        transition: all 0.1s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 45px; /* طول ثابت ومناسب */
+    async function loadStudents() {
+        const cls = document.getElementById('selClass').value;
+        const wk = document.getElementById('selWeek').value;
+        document.getElementById('dispC').innerText = cls || "-";
+        if(!cls) return;
+
+        const listDiv = document.getElementById('list');
+        listDiv.innerHTML = "جاري التحميل...";
+
+        try {
+            const [sSnap, gSnap] = await Promise.all([
+                db.collection('students').where('class','==',cls).get(),
+                db.collection('grades').where('week','==',wk).get()
+            ]);
+
+            const gMap = {};
+            gSnap.forEach(d => { gMap[`${d.data().sid}_${d.data().type}`] = d.data().score; });
+
+            students = [];
+            let html = '';
+            let i = 0;
+            sSnap.forEach(doc => {
+                const s = doc.data();
+                const sid = doc.id;
+                students.push({sid, ...s});
+                
+                html += `
+                <div class="student-card" id="card_${sid}">
+                    <div class="name-row"><span>${s.name}</span> <small>#${s.seatNo}</small></div>
+                    <div class="btn-group">
+                        ${wk.startsWith('ex') ? 
+                            `<div class="score-box" id="box_${sid}_${wk}" onclick="openPad('${sid}','${wk}',15,${i})">
+                                <small>اختبار</small><span id="v_${sid}_${wk}">${gMap[sid+'_'+wk]??'-'}</span>
+                            </div>` :
+                            `<div class="score-box" id="box_${sid}_t" onclick="openPad('${sid}','t',20,${i})">
+                                <small>تقييم</small><span id="v_${sid}_t">${gMap[sid+'_t']??'-'}</span>
+                            </div>
+                            <div class="score-box" id="box_${sid}_v" onclick="openPad('${sid}','v',10,${i})">
+                                <small>واجب</small><span id="v_${sid}_v">${gMap[sid+'_v']??'-'}</span>
+                            </div>
+                            <div class="score-box" id="box_${sid}_s" onclick="openPad('${sid}','s',10,${i})">
+                                <small>سلوك</small><span id="v_${sid}_s">${gMap[sid+'_s']??'-'}</span>
+                            </div>`
+                        }
+                    </div>
+                </div>`;
+                i++;
+            });
+            listDiv.innerHTML = html || "لا يوجد طلاب";
+        } catch(e) { listDiv.innerHTML = "خطأ في الاتصال"; }
     }
 
-    .key:active { 
-        background: #3b82f6; 
-        color: white; 
-        transform: scale(0.9); 
-        border-color: #3b82f6;
+    function openPad(sid, type, max, idx) {
+        activeInput = { sid, type, idx, max };
+        document.querySelectorAll('.student-card').forEach(c => c.classList.remove('active-now'));
+        document.querySelectorAll('.score-box').forEach(b => b.classList.remove('active'));
+        
+        const card = document.getElementById(`card_${sid}`);
+        card.classList.add('active-now');
+        document.getElementById(`box_${sid}_${type}`).classList.add('active');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        const pad = document.getElementById('numpad');
+        pad.style.display = 'grid';
+        let keys = '';
+        for(let k=0; k<=max; k++) keys += `<div class="key" onclick="saveGrade(${k})">${k}</div>`;
+        keys += `<div class="key close-key" onclick="closePad()">إغلاق ×</div>`;
+        pad.innerHTML = keys;
     }
 
-    /* مفتاح الإغلاق بتصميم ألطف */
-    .close-key { 
-        background: #fff1f2; 
-        color: #e11d48; 
-        grid-column: span 5; 
-        height: 35px;
-        font-size: 13px;
-        border: 1px solid #fecdd3;
-        margin-top: 4px;
+    async function saveGrade(val) {
+        const {sid, type, idx, max} = activeInput;
+        const wk = document.getElementById('selWeek').value;
+        document.getElementById(`v_${sid}_${type}`).innerText = val;
+
+        db.collection('grades').doc(`${sid}_${wk}_${type}`).set({
+            sid, type, score: val, week: wk, ts: Date.now()
+        }, {merge:true});
+
+        // الانتقال الآلي
+        if(!wk.startsWith('ex')) {
+            if(type === 't') { openPad(sid, 'v', 10, idx); return; }
+            if(type === 'v') { openPad(sid, 's', 10, idx); return; }
+        }
+
+        if(idx < students.length - 1) {
+            const n = students[idx+1];
+            openPad(n.sid, wk.startsWith('ex')?wk:'t', wk.startsWith('ex')?15:20, idx+1);
+        } else { closePad(); }
     }
 
-    /* تمييز الأرقام الزوجية بلون خفيف جداً لتسهيل النظر */
-    .key:nth-child(even) {
-        background: #f8fafc;
-    }
-
-    /* كارت الطالب المختار */
-    .student-card.active-now {
-        border-color: #3b82f6;
-        background: #f0f7ff;
-        transform: translateY(-2px);
-    }
-</style>
+    function closePad() { document.getElementById('numpad').style.display = 'none'; }
+    window.onload = init;
+</script>
+</body>
+</html>
