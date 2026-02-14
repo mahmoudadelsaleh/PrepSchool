@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام الرصد الذكي - نسخة المعلم</title>
+    <title>نظام الرصد الهندسي</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
@@ -12,55 +12,56 @@
         :root { --primary: #0f172a; --accent: #2563eb; --bg: #f1f5f9; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding-bottom: 280px; direction: rtl; }
         
-        header { background: var(--primary); color: white; padding: 12px; position: sticky; top: 0; z-index: 1000; border-radius: 0 0 15px 15px; }
-        .header-info { display: flex; justify-content: space-around; font-size: 11px; margin-bottom: 8px; color: #94a3b8; }
-        .header-info span { color: #f8fafc; font-weight: bold; }
-        .controls { display: flex; gap: 6px; }
-        select { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px; }
+        header { background: var(--primary); color: white; padding: 10px; position: sticky; top: 0; z-index: 1000; border-radius: 0 0 15px 15px; }
+        .header-info { display: flex; justify-content: space-around; font-size: 12px; margin-bottom: 5px; color: #94a3b8; }
+        .header-info span { color: #fff; font-weight: bold; }
+        .controls { display: flex; gap: 5px; }
+        select { flex: 1; padding: 8px; border-radius: 8px; border: none; font-weight: bold; }
 
         .container { padding: 10px; max-width: 500px; margin: auto; }
-        .student-card { background: white; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 2.5px solid transparent; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .student-card { background: white; padding: 10px; border-radius: 12px; margin-bottom: 8px; border: 2px solid transparent; }
         .student-card.active-now { border-color: var(--accent); background: #f0f7ff; }
-        .name-row { font-weight: bold; font-size: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .name-row { font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; margin-bottom: 8px; }
         
-        .btn-group { display: flex; gap: 6px; }
-        .score-box { flex: 1; height: 50px; border: 1.5px solid #cbd5e1; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; cursor: pointer; }
+        .btn-group { display: flex; gap: 5px; }
+        .score-box { flex: 1; height: 45px; border: 1.5px solid #cbd5e1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; cursor: pointer; }
         .score-box.active { border-color: var(--accent); background: #dbeafe; }
-        .score-box small { font-size: 10px; color: #64748b; }
-        .score-box span { font-weight: 900; font-size: 20px; color: var(--accent); }
+        .score-box span { font-weight: 900; font-size: 18px; color: var(--accent); }
 
-        /* لوحة المفاتيح الهندسية */
+        /* اللوحة الهندسية المظبوطة بالملي */
         .numpad { 
-            position: fixed; bottom: 8px; left: 8px; right: 8px; 
-            background: #cbd5e1; padding: 10px; display: none; 
-            gap: 6px; border-radius: 18px; box-shadow: 0 -5px 30px rgba(0,0,0,0.3); z-index: 2000;
+            position: fixed; bottom: 5px; left: 5px; right: 5px; 
+            background: #cbd5e1; padding: 8px; display: none; 
+            gap: 4px; border-radius: 15px; box-shadow: 0 -5px 30px rgba(0,0,0,0.3); z-index: 2000;
         }
         .key { 
-            background: #f8fafc; border-radius: 10px; font-weight: 900; 
+            background: #f8fafc; border-radius: 8px; font-weight: 900; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 22px; color: #1e293b; border-bottom: 5px solid #94a3b8; 
+            font-size: 20px; color: #1e293b; border-bottom: 4px solid #94a3b8; 
             cursor: pointer; height: 50px;
         }
-        .key:active { border-bottom-width: 1px; transform: translateY(4px); background: var(--accent); color: white; }
-        
-        /* أزرار الوظائف */
-        .btn-all { background: #059669; color: white; border-bottom-color: #047857; font-size: 14px; grid-column: span 3; }
-        .btn-skip { background: #64748b; color: white; border-bottom-color: #475569; font-size: 14px; grid-column: span 3; }
-        .btn-close { background: #e11d48; color: white; border-bottom-color: #be123c; grid-column: span 100; height: 35px; font-size: 12px; margin-top: 4px; }
+        .key:active { border-bottom-width: 1px; transform: translateY(3px); background: var(--accent); color: white; }
+
+        /* أزرار التحكم في سطر واحد */
+        .admin-keys { grid-column: 1 / -1; display: flex; gap: 4px; margin-top: 4px; }
+        .admin-keys .key { flex: 1; font-size: 13px; height: 40px; color: white; }
+        .btn-all { background: #059669; border-bottom-color: #047857; }
+        .btn-skip { background: #64748b; border-bottom-color: #475569; }
+        .btn-close { background: #e11d48; border-bottom-color: #be123c; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="header-info">
-        <div>المعلم: <span id="dispT">-</span></div>
-        <div>المادة: <span id="dispSub">اللغة العربية</span></div>
-        <div>الفصل: <span id="dispC">-</span></div>
+        <div>مدرس: <span id="dispT">-</span></div>
+        <div>مادة: <span id="dispSub">عربي</span></div>
+        <div>فصل: <span id="dispC">-</span></div>
     </div>
     <div class="controls">
         <select id="selClass" onchange="loadStudents()"></select>
         <select id="selWeek" onchange="loadStudents()">
-            <script>for(let i=1; i<=14; i++) document.write(`<option value="w${i}">الأسبوع ${i}</option>`);</script>
+            <script>for(let i=1; i<=14; i++) document.write(`<option value="w${i}">أسبوع ${i}</option>`);</script>
             <option value="ex1">شهر ١ (١٥)</option>
             <option value="ex2">شهر ٢ (١٥)</option>
         </select>
@@ -80,14 +81,10 @@
         if(!tID) { location.href='index.html'; return; }
         document.getElementById('dispT').innerText = sessionStorage.getItem('userName') || tID;
         const tDoc = await db.collection('teachers').doc(tID).get();
-        if(tDoc.exists) {
-            const data = tDoc.data();
-            if(data.subject) document.getElementById('dispSub').innerText = data.subject;
-            const assigned = data.assignedClasses || [];
-            const sel = document.getElementById('selClass');
-            sel.innerHTML = '<option value="">الفصل...</option>';
-            assigned.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
-        }
+        if(tDoc.exists && tDoc.data().subject) document.getElementById('dispSub').innerText = tDoc.data().subject;
+        
+        const sel = document.getElementById('selClass');
+        if(tDoc.exists) tDoc.data().assignedClasses.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
     }
 
     async function loadStudents() {
@@ -104,33 +101,20 @@
         const gMap = {};
         gSnap.forEach(d => { gMap[`${d.data().sid}_${d.data().type}`] = d.data().score; });
 
-        students = [];
-        let html = '';
-        let i = 0;
+        students = []; let html = ''; let i = 0;
         sSnap.forEach(doc => {
-            const s = doc.data();
-            const sid = doc.id;
-            students.push({sid, ...s});
+            const s = doc.data(); const sid = doc.id; students.push({sid, ...s});
             html += `<div class="student-card" id="card_${sid}">
                 <div class="name-row"><span>${s.name}</span><small>${toAr(s.seatNo)}</small></div>
                 <div class="btn-group">
                     ${wk.startsWith('ex') ? 
-                        `<div class="score-box" id="box_${sid}_${wk}" onclick="openPad('${sid}','${wk}',15,${i})">
-                            <small>درجة</small><span id="v_${sid}_${wk}">${gMap[sid+'_'+wk]!==undefined?toAr(gMap[sid+'_'+wk]):'-'}</span>
-                        </div>` :
-                        `<div class="score-box" id="box_${sid}_t" onclick="openPad('${sid}','t',20,${i})">
-                            <small>تقييم</small><span id="v_${sid}_t">${gMap[sid+'_t']!==undefined?toAr(gMap[sid+'_t']):'-'}</span>
-                        </div>
-                        <div class="score-box" id="box_${sid}_v" onclick="openPad('${sid}','v',10,${i})">
-                            <small>واجب</small><span id="v_${sid}_v">${gMap[sid+'_v']!==undefined?toAr(gMap[sid+'_v']):'-'}</span>
-                        </div>
-                        <div class="score-box" id="box_${sid}_s" onclick="openPad('${sid}','s',10,${i})">
-                            <small>سلوك</small><span id="v_${sid}_s">${gMap[sid+'_s']!==undefined?toAr(gMap[sid+'_s']):'-'}</span>
-                        </div>`
+                        `<div class="score-box" id="box_${sid}_${wk}" onclick="openPad('${sid}','${wk}',15,${i})"><small>اختبار</small><span id="v_${sid}_${wk}">${gMap[sid+'_'+wk]!==undefined?toAr(gMap[sid+'_'+wk]):'-'}</span></div>` :
+                        `<div class="score-box" id="box_${sid}_t" onclick="openPad('${sid}','t',20,${i})"><small>تقييم</small><span id="v_${sid}_t">${gMap[sid+'_t']!==undefined?toAr(gMap[sid+'_t']):'-'}</span></div>
+                         <div class="score-box" id="box_${sid}_v" onclick="openPad('${sid}','v',10,${i})"><small>واجب</small><span id="v_${sid}_v">${gMap[sid+'_v']!==undefined?toAr(gMap[sid+'_v']):'-'}</span></div>
+                         <div class="score-box" id="box_${sid}_s" onclick="openPad('${sid}','s',10,${i})"><small>سلوك</small><span id="v_${sid}_s">${gMap[sid+'_s']!==undefined?toAr(gMap[sid+'_s']):'-'}</span></div>`
                     }
                 </div>
-            </div>`;
-            i++;
+            </div>`; i++;
         });
         document.getElementById('list').innerHTML = html;
     }
@@ -142,45 +126,39 @@
         document.getElementById(`card_${sid}`).classList.add('active-now');
         document.getElementById(`box_${sid}_${type}`).classList.add('active');
         
-        const card = document.getElementById(`card_${sid}`);
-        window.scrollTo({ top: card.offsetTop - 80, behavior: 'smooth' });
+        window.scrollTo({ top: document.getElementById(`card_${sid}`).offsetTop - 100, behavior: 'smooth' });
 
         const pad = document.getElementById('numpad');
         pad.style.display = 'grid';
-        
         let keys = '';
+
         if(max === 20) {
             pad.style.gridTemplateColumns = 'repeat(7, 1fr)';
-            for(let k=1; k<=20; k++) keys += `<div class="key" onclick="saveGrade(${k})">${toAr(k)}</div>`;
-            keys += `<div class="key" onclick="saveGrade(0)">${toAr(0)}</div>`;
-        } else if(max === 10) {
-            pad.style.gridTemplateColumns = 'repeat(6, 1fr)';
-            for(let k=1; k<=10; k++) keys += `<div class="key" onclick="saveGrade(${k})">${toAr(k)}</div>`;
-            keys += `<div class="key" style="grid-column: span 2" onclick="saveGrade(0)">${toAr(0)}</div>`;
+            for(let k=0; k<=20; k++) keys += `<div class="key" onclick="saveGrade(${k})">${toAr(k)}</div>`;
         } else if(max === 15) {
             pad.style.gridTemplateColumns = 'repeat(6, 1fr)';
             for(let k=1; k<=15; k++) {
-                keys += `<div class="key" id="k${k}" onclick="saveGrade(${k})">${toAr(k)}</div>`;
-                if(k === 5) keys += `<div class="key" style="grid-row: span 3; height: 162px;" onclick="saveGrade(0)">${toAr(0)}</div>`;
+                keys += `<div class="key" onclick="saveGrade(${k})">${toAr(k)}</div>`;
+                if(k === 5) keys += `<div class="key" style="grid-row: span 3; height: 158px;" onclick="saveGrade(0)">${toAr(0)}</div>`;
             }
+        } else if(max === 10) {
+            pad.style.gridTemplateColumns = 'repeat(6, 1fr)';
+            for(let k=0; k<=9; k++) keys += `<div class="key" onclick="saveGrade(${k})">${toAr(k)}</div>`;
+            keys += `<div class="key" style="grid-column: span 2" onclick="saveGrade(10)">${toAr(10)}</div>`;
         }
 
-        keys += `<div class="key btn-all" onclick="applyToAllColumn()">الكل ${type === 't' ? 'تقييم' : type === 'v' ? 'واجب' : 'سلوك'} ✅</div>`;
-        keys += `<div class="key btn-skip" onclick="skipStudent()">تخطي ➡️</div>`;
-        keys += `<div class="key btn-close" onclick="closePad()">إغلاق اللوحة ×</div>`;
+        keys += `<div class="admin-keys">
+            <div class="key btn-all" onclick="applyToAll()">رصد للكل ✅</div>
+            <div class="key btn-skip" onclick="skipStudent()">تخطي ➡️</div>
+            <div class="key btn-close" onclick="closePad()">إغلاق ×</div>
+        </div>`;
         pad.innerHTML = keys;
     }
 
     async function saveGrade(val) {
-        const {sid, type, idx} = activeInput;
-        const wk = document.getElementById('selWeek').value;
+        const {sid, type, idx} = activeInput; const wk = document.getElementById('selWeek').value;
         document.getElementById(`v_${sid}_${type}`).innerText = toAr(val);
-
-        db.collection('grades').doc(`${sid}_${wk}_${type}`).set({
-            sid, type, score: Number(val), week: wk, ts: Date.now()
-        }, {merge:true});
-
-        // الانتقال الأفعواني (أفقياً ثم لأسفل)
+        db.collection('grades').doc(`${sid}_${wk}_${type}`).set({sid, type, score: Number(val), week: wk, ts: Date.now()}, {merge:true});
         if(!wk.startsWith('ex')) {
             if(type === 't') { openPad(sid, 'v', 10, idx); return; }
             if(type === 'v') { openPad(sid, 's', 10, idx); return; }
@@ -188,29 +166,23 @@
         skipStudent();
     }
 
-    async function applyToAllColumn() {
-        const {type, max} = activeInput;
-        const val = prompt(`أدخل الدرجة لجميع الطلاب في عمود (${type === 't' ? 'التقييم' : type === 'v' ? 'الواجب' : 'السلوك'}):`, max);
-        if (val === null || val === "" || isNaN(val)) return;
-
-        const wk = document.getElementById('selWeek').value;
-        const batch = db.batch();
+    async function applyToAll() {
+        const {type, max} = activeInput; let v = prompt(`الدرجة للكل في ${type}:`, max);
+        if(!v || isNaN(v)) return;
+        const wk = document.getElementById('selWeek').value; const batch = db.batch();
         students.forEach(s => {
-            document.getElementById(`v_${s.sid}_${type}`).innerText = toAr(val);
-            batch.set(db.collection('grades').doc(`${s.sid}_${wk}_${type}`), { sid: s.sid, type, score: Number(val), week: wk, ts: Date.now() }, {merge:true});
+            document.getElementById(`v_${s.sid}_${type}`).innerText = toAr(v);
+            batch.set(db.collection('grades').doc(`${s.sid}_${wk}_${type}`), {sid:s.sid, type, score:Number(v), week:wk, ts:Date.now()}, {merge:true});
         });
-        await batch.commit();
-        alert("تم رصد العمود بالكامل");
-        closePad();
+        await batch.commit(); closePad();
     }
 
     function skipStudent() {
-        const {idx} = activeInput;
-        const wk = document.getElementById('selWeek').value;
+        const {idx} = activeInput; const wk = document.getElementById('selWeek').value;
         if(idx < students.length - 1) {
             const next = students[idx+1];
             openPad(next.sid, wk.startsWith('ex')?wk:'t', wk.startsWith('ex')?15:20, idx+1);
-        } else { closePad(); alert("تم إنهاء الفصل!"); }
+        } else { closePad(); }
     }
 
     function closePad() { document.getElementById('numpad').style.display = 'none'; }
